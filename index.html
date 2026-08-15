@@ -1,19 +1,905 @@
 <!DOCTYPE html>
 <html>
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Kamera Absensi HUT RI</title>
+<head>
+
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>
+    Kamera Swafoto HUT RI
+  </title>
+
+
+  <style>
+
+    * {
+      box-sizing: border-box;
+    }
+
+
+    body {
+
+      margin: 0;
+
+      padding: 15px;
+
+      font-family:
+        Arial,
+        sans-serif;
+
+      background:
+        #f3f4f6;
+
+      color:
+        #222;
+
+    }
+
+
+    .card {
+
+      max-width:
+        480px;
+
+      margin:
+        15px auto;
+
+      background:
+        white;
+
+      padding:
+        22px;
+
+      border-radius:
+        16px;
+
+      box-shadow:
+        0 4px 18px
+        rgba(0,0,0,0.12);
+
+      text-align:
+        center;
+
+    }
+
+
+    h2 {
+
+      margin:
+        5px 0 8px;
+
+      font-size:
+        22px;
+
+    }
+
+
+    .subtitle {
+
+      color:
+        #666;
+
+      font-size:
+        14px;
+
+      line-height:
+        1.5;
+
+      margin-bottom:
+        18px;
+
+    }
+
+
+    video {
+
+      width:
+        100%;
+
+      display:
+        block;
+
+      border-radius:
+        14px;
+
+      background:
+        #111;
+
+      aspect-ratio:
+        3 / 4;
+
+      object-fit:
+        cover;
+
+    }
+
+
+    canvas {
+
+      display:
+        none;
+
+    }
+
+
+    #preview {
+
+      display:
+        none;
+
+      width:
+        100%;
+
+      border-radius:
+        14px;
+
+    }
+
+
+    button {
+
+      width:
+        100%;
+
+      border:
+        none;
+
+      border-radius:
+        10px;
+
+      padding:
+        14px;
+
+      margin-top:
+        12px;
+
+      font-size:
+        16px;
+
+      font-weight:
+        bold;
+
+      color:
+        white;
+
+      background:
+        #1a73e8;
+
+    }
+
+
+    button:disabled {
+
+      background:
+        #999;
+
+    }
+
+
+    .green {
+
+      background:
+        #16803c;
+
+    }
+
+
+    .gray {
+
+      background:
+        #666;
+
+    }
+
+
+    .status {
+
+      margin-top:
+        15px;
+
+      font-size:
+        14px;
+
+      line-height:
+        1.5;
+
+    }
+
+
+    .success {
+
+      color:
+        #16803c;
+
+      font-weight:
+        bold;
+
+    }
+
+
+    .error {
+
+      color:
+        #c5221f;
+
+      font-weight:
+        bold;
+
+    }
+
+
+    .loading {
+
+      color:
+        #555;
+
+    }
+
+
+    .note {
+
+      margin-top:
+        15px;
+
+      padding:
+        11px;
+
+      border-radius:
+        8px;
+
+      background:
+        #f5f5f5;
+
+      color:
+        #666;
+
+      font-size:
+        12px;
+
+      line-height:
+        1.5;
+
+    }
+
+  </style>
+
 </head>
+
 
 <body>
 
-    <h1>📸 Kamera Absensi HUT RI</h1>
 
-    <p>
-        Halaman kamera berhasil dibuat.
-    </p>
+<div class="card">
+
+
+  <div style="font-size:42px;">
+    📸
+  </div>
+
+
+  <h2>
+    Swafoto Absensi
+  </h2>
+
+
+  <div class="subtitle">
+
+    Upacara HUT RI Ke-81
+    <br>
+    Kecamatan Mekarmukti
+
+  </div>
+
+
+  <!-- KAMERA -->
+
+  <video
+    id="video"
+    autoplay
+    playsinline
+    muted
+  ></video>
+
+
+  <!-- HASIL FOTO -->
+
+  <canvas
+    id="canvas"
+  ></canvas>
+
+
+  <img
+    id="preview"
+  >
+
+
+  <!-- TOMBOL AMBIL FOTO -->
+
+  <button
+    id="ambilBtn"
+    onclick="ambilFoto()"
+  >
+
+    📸 AMBIL SWAFOTO
+
+  </button>
+
+
+  <!-- TOMBOL ULANG -->
+
+  <button
+    id="ulangBtn"
+    class="gray"
+    onclick="ambilUlang()"
+    style="display:none;"
+  >
+
+    🔄 AMBIL ULANG
+
+  </button>
+
+
+  <!-- TOMBOL GUNAKAN -->
+
+  <button
+    id="gunakanBtn"
+    class="green"
+    onclick="gunakanFoto()"
+    style="display:none;"
+  >
+
+    ✅ GUNAKAN FOTO
+
+  </button>
+
+
+  <div
+    id="status"
+    class="status"
+  >
+
+    ⏳ Meminta akses kamera...
+
+  </div>
+
+
+  <div class="note">
+
+    Pastikan wajah terlihat jelas.
+    <br>
+    Gunakan kamera depan untuk melakukan swafoto.
+    <br>
+    Foto harus diambil langsung dari kamera.
+
+  </div>
+
+
+</div>
+
+
+
+<script>
+
+
+// =====================================================
+// VARIABEL
+// =====================================================
+
+
+let stream =
+  null;
+
+
+let fotoBase64 =
+  null;
+
+
+
+// =====================================================
+// BUKA KAMERA
+// =====================================================
+
+
+async function bukaKamera() {
+
+
+  const status =
+    document.getElementById(
+      "status"
+    );
+
+
+  try {
+
+
+    // Meminta kamera depan
+
+    stream =
+      await navigator
+        .mediaDevices
+        .getUserMedia({
+
+          video: {
+
+            facingMode:
+              {
+                ideal:
+                  "user"
+              },
+
+            width:
+              {
+                ideal:
+                  1280
+              },
+
+            height:
+              {
+                ideal:
+                  1280
+              }
+
+          },
+
+          audio:
+            false
+
+        });
+
+
+    const video =
+      document.getElementById(
+        "video"
+      );
+
+
+    video.srcObject =
+      stream;
+
+
+    status.innerHTML =
+
+      "<div class='success'>" +
+
+      "✅ Kamera siap." +
+
+      "<br>" +
+
+      "Silakan arahkan kamera ke wajah Anda." +
+
+      "</div>";
+
+
+  }
+
+
+  catch (error) {
+
+
+    console.error(error);
+
+
+    status.innerHTML =
+
+      "<div class='error'>" +
+
+      "❌ Kamera tidak dapat dibuka." +
+
+      "<br><br>" +
+
+      "Silakan periksa izin kamera browser." +
+
+      "</div>";
+
+  }
+
+}
+
+
+
+// =====================================================
+// AMBIL FOTO
+// =====================================================
+
+
+function ambilFoto() {
+
+
+  const video =
+    document.getElementById(
+      "video"
+    );
+
+
+  const canvas =
+    document.getElementById(
+      "canvas"
+    );
+
+
+  if (
+    !video.videoWidth ||
+    !video.videoHeight
+  ) {
+
+
+    alert(
+      "Kamera belum siap. Tunggu beberapa detik."
+    );
+
+
+    return;
+
+  }
+
+
+  const width =
+    video.videoWidth;
+
+
+  const height =
+    video.videoHeight;
+
+
+  canvas.width =
+    width;
+
+
+  canvas.height =
+    height;
+
+
+  const context =
+    canvas.getContext(
+      "2d"
+    );
+
+
+  context.drawImage(
+    video,
+    0,
+    0,
+    width,
+    height
+  );
+
+
+  // Kompres foto JPEG
+
+  fotoBase64 =
+    canvas.toDataURL(
+      "image/jpeg",
+      0.85
+    );
+
+
+  // Tampilkan foto
+
+  const preview =
+    document.getElementById(
+      "preview"
+    );
+
+
+  preview.src =
+    fotoBase64;
+
+
+  preview.style.display =
+    "block";
+
+
+  // Sembunyikan kamera
+
+  video.style.display =
+    "none";
+
+
+  // Tombol
+
+  document
+    .getElementById(
+      "ambilBtn"
+    )
+    .style.display =
+    "none";
+
+
+  document
+    .getElementById(
+      "ulangBtn"
+    )
+    .style.display =
+    "block";
+
+
+  document
+    .getElementById(
+      "gunakanBtn"
+    )
+    .style.display =
+    "block";
+
+
+  document
+    .getElementById(
+      "status"
+    )
+    .innerHTML =
+
+      "<div class='success'>" +
+
+      "📸 Foto berhasil diambil." +
+
+      "<br>" +
+
+      "Periksa foto sebelum digunakan." +
+
+      "</div>";
+
+
+  // Matikan kamera
+
+  matikanKamera();
+
+}
+
+
+
+// =====================================================
+// AMBIL ULANG
+// =====================================================
+
+
+function ambilUlang() {
+
+
+  fotoBase64 =
+    null;
+
+
+  document
+    .getElementById(
+      "preview"
+    )
+    .style.display =
+    "none";
+
+
+  document
+    .getElementById(
+      "video"
+    )
+    .style.display =
+    "block";
+
+
+  document
+    .getElementById(
+      "ulangBtn"
+    )
+    .style.display =
+    "none";
+
+
+  document
+    .getElementById(
+      "gunakanBtn"
+    )
+    .style.display =
+    "none";
+
+
+  document
+    .getElementById(
+      "ambilBtn"
+    )
+    .style.display =
+    "block";
+
+
+  bukaKamera();
+
+}
+
+
+
+// =====================================================
+// GUNAKAN FOTO
+// =====================================================
+
+
+function gunakanFoto() {
+
+
+  if (!fotoBase64) {
+
+
+    alert(
+      "Foto belum tersedia."
+    );
+
+
+    return;
+
+  }
+
+
+  const status =
+    document.getElementById(
+      "status"
+    );
+
+
+  status.innerHTML =
+
+    "<div class='loading'>" +
+
+    "⏳ Mengirim foto ke halaman absensi..." +
+
+    "</div>";
+
+
+  document
+    .getElementById(
+      "gunakanBtn"
+    )
+    .disabled =
+    true;
+
+
+  // ===================================================
+  // KIRIM FOTO KE HALAMAN PEMBUKA
+  // ===================================================
+
+  if (
+    window.opener &&
+    !window.opener.closed
+  ) {
+
+
+    window.opener.postMessage(
+
+      {
+
+        type:
+          "SWAFOTO_ABSENSI",
+
+        foto:
+          fotoBase64
+
+      },
+
+      "*"
+
+    );
+
+
+    status.innerHTML =
+
+      "<div class='success'>" +
+
+      "✅ Foto berhasil dikirim." +
+
+      "<br><br>" +
+
+      "Silakan kembali ke halaman absensi." +
+
+      "</div>";
+
+
+    setTimeout(
+
+      function() {
+
+        window.close();
+
+      },
+
+      1200
+
+    );
+
+
+  }
+
+
+  else {
+
+
+    status.innerHTML =
+
+      "<div class='error'>" +
+
+      "❌ Halaman absensi tidak ditemukan." +
+
+      "<br><br>" +
+
+      "Silakan buka kamera melalui tombol " +
+
+      "Buka Kamera pada halaman absensi." +
+
+      "</div>";
+
+
+    document
+      .getElementById(
+        "gunakanBtn"
+      )
+      .disabled =
+      false;
+
+  }
+
+}
+
+
+
+// =====================================================
+// MATIKAN KAMERA
+// =====================================================
+
+
+function matikanKamera() {
+
+
+  if (stream) {
+
+
+    stream
+      .getTracks()
+      .forEach(
+
+        function(track) {
+
+          track.stop();
+
+        }
+
+      );
+
+
+    stream =
+      null;
+
+  }
+
+}
+
+
+
+// =====================================================
+// SAAT HALAMAN DITUTUP
+// =====================================================
+
+
+window.addEventListener(
+  "beforeunload",
+  function() {
+
+    matikanKamera();
+
+  }
+);
+
+
+
+// =====================================================
+// MULAI KAMERA
+// =====================================================
+
+
+bukaKamera();
+
+
+</script>
+
 
 </body>
+
 </html>
